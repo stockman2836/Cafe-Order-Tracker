@@ -8,7 +8,8 @@ class OrderItem extends Component {
     
     this.state = {
       isSelected: false,
-      hovered: false
+      hovered: false,
+      showDeleteConfirm: false
     };
   }
 
@@ -26,13 +27,18 @@ class OrderItem extends Component {
     if (prevProps.order.status !== this.props.order.status) {
       console.log(`📝 Order #${this.props.order.id} status changed: ${this.props.order.status ? 'completed' : 'pending'}`);
     }
+
+    if (prevState.showDeleteConfirm !== this.state.showDeleteConfirm) {
+      console.log(`🗑️ Order #${this.props.order.id} delete confirmation ${this.state.showDeleteConfirm ? 'shown' : 'hidden'}`);
+    }
   }
 
   handleItemClick = () => {
     console.log(`👆 Click on order #${this.props.order.id}`);
     
     this.setState(prevState => ({
-      isSelected: !prevState.isSelected
+      isSelected: !prevState.isSelected,
+      showDeleteConfirm: false
     }));
   }
 
@@ -41,6 +47,27 @@ class OrderItem extends Component {
     console.log(`🔄 Toggling status of order #${this.props.order.id}`);
     
     this.props.onToggleStatus(this.props.order.id);
+  }
+
+  handleDeleteClick = (e) => {
+    e.stopPropagation();
+    console.log(`🗑️ Delete button clicked for order #${this.props.order.id}`);
+    
+    this.setState({ showDeleteConfirm: true });
+  }
+
+  handleDeleteConfirm = (e) => {
+    e.stopPropagation();
+    console.log(`✅ Confirmed deletion of order #${this.props.order.id}`);
+    
+    this.props.onDeleteOrder(this.props.order.id);
+  }
+
+  handleDeleteCancel = (e) => {
+    e.stopPropagation();
+    console.log(`❌ Cancelled deletion of order #${this.props.order.id}`);
+    
+    this.setState({ showDeleteConfirm: false });
   }
 
   handleMouseEnter = () => {
@@ -55,13 +82,14 @@ class OrderItem extends Component {
     console.log(`🔄 OrderItem #${this.props.order.id}: render called`);
     
     const { order } = this.props;
-    const { isSelected, hovered } = this.state;
+    const { isSelected, hovered, showDeleteConfirm } = this.state;
 
     const itemClasses = [
       'order-item',
       isSelected ? 'selected' : '',
       hovered ? 'hovered' : '',
-      order.status ? 'completed' : 'pending'
+      order.status ? 'completed' : 'pending',
+      showDeleteConfirm ? 'delete-confirm' : ''
     ].filter(Boolean).join(' ');
 
     return (
@@ -81,14 +109,40 @@ class OrderItem extends Component {
           
           <h3 className="dish-name">{order.dish}</h3>
           
-          <div className="order-actions">
-            <button 
-              className={`status-button ${order.status ? 'mark-pending' : 'mark-completed'}`}
-              onClick={this.handleStatusToggle}
-            >
-              {order.status ? '↩️ Mark as Pending' : '✅ Mark as Completed'}
-            </button>
-          </div>
+          {showDeleteConfirm ? (
+            <div className="delete-confirmation">
+              <p>❓ Delete this order?</p>
+              <div className="confirm-buttons">
+                <button 
+                  className="confirm-delete"
+                  onClick={this.handleDeleteConfirm}
+                >
+                  🗑️ Yes, Delete
+                </button>
+                <button 
+                  className="cancel-delete"
+                  onClick={this.handleDeleteCancel}
+                >
+                  ❌ Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="order-actions">
+              <button 
+                className={`status-button ${order.status ? 'mark-pending' : 'mark-completed'}`}
+                onClick={this.handleStatusToggle}
+              >
+                {order.status ? '↩️ Mark as Pending' : '✅ Mark as Completed'}
+              </button>
+              <button 
+                className="delete-button"
+                onClick={this.handleDeleteClick}
+              >
+                🗑️ Delete
+              </button>
+            </div>
+          )}
         </div>
         
         {isSelected && (
